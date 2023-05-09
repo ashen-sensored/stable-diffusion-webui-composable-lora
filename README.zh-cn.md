@@ -1,3 +1,4 @@
+[![Python](https://img.shields.io/badge/Python-%E2%89%A73.10-blue)](https://www.python.org/downloads/)
 # Composable LoRA/LyCORIS with steps
 这个扩展取代了内置的 forward LoRA 过程，同时提供对LoCon、LyCORIS的支持。
 

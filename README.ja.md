@@ -1,3 +1,4 @@
+[![Python](https://img.shields.io/badge/Python-%E2%89%A73.10-blue)](https://www.python.org/downloads/)
 # Composable LoRA/LyCORIS with steps
 この拡張機能は、内部のforward LoRAプロセスを置き換え、同時にLoCon、LyCORISをサポートします。
 
