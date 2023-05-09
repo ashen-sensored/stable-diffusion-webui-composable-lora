@@ -4,6 +4,8 @@
 
 本擴展Fork自Composable LoRA擴展
 
+[![stable-diffusion-webui-composable-lycoris](https://res.cloudinary.com/marcomontalbano/image/upload/v1683643967/video_to_markdown/images/youtube--QS9yjSMySuY-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=QS9yjSMySuY "stable-diffusion-webui-composable-lycoris")
+
 ### 語言
 * [英文](README.md) (google翻譯)
 * [简体中文](README.zh-cn.md) (維基百科繁簡轉換系統)
