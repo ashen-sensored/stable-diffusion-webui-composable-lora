@@ -169,3 +169,5 @@ If "Composable LoRA with step" is enabled, you can select this option to generat
 *  [opparco, Composable LoRA original author](https://github.com/opparco)、[Composable LoRA](https://github.com/opparco/stable-diffusion-webui-composable-lora)
 *  [JackEllie's Stable-Siffusion community team](https://discord.gg/TM5d89YNwA) 、 [Youtube channel](https://www.youtube.com/@JackEllie)
 *  [Chinese Wikipedia community team](https://discord.gg/77n7vnu)
+
+<p align="center"><img src="https://count.getloli.com/get/@a2569875-stable-diffusion-webui-composable-lora.github" alt="a2569875/stable-diffusion-webui-composable-lora"></p>

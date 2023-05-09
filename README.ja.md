@@ -137,3 +137,5 @@ LoRAの挿入箇所を`AND`構文と関連付け、LoRAの影響範囲を特定�
 *  [opparco: Composable LoRAの元の作者である](https://github.com/opparco)、[Composable LoRA](https://github.com/opparco/stable-diffusion-webui-composable-lora)
 *  [JackEllieのStable-Siffusionコミュニティチーム](https://discord.gg/TM5d89YNwA) 、 [YouTubeチャンネル](https://www.youtube.com/@JackEllie)
 *  [中文ウィキペディアのコミュニティチーム](https://discord.gg/77n7vnu)
+
+<p align="center"><img src="https://count.getloli.com/get/@a2569875-stable-diffusion-webui-composable-lora.github" alt="a2569875/stable-diffusion-webui-composable-lora"></p>
