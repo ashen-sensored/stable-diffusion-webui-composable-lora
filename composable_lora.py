@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 import re
 import torch
 import composable_lora_step
@@ -31,7 +31,7 @@ def lora_forward(compvis_module, input, res):
     if len(lora.loaded_loras) == 0:
         return res
 
-    lora_layer_name_loading : str | None = getattr(compvis_module, 'lora_layer_name', None)
+    lora_layer_name_loading : Optional[str] = getattr(compvis_module, 'lora_layer_name', None)
     if lora_layer_name_loading is None:
         return res
     #let it type is actually a string

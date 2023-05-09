@@ -1,3 +1,4 @@
+from typing import Optional
 import torch
 from modules import shared
 
@@ -9,7 +10,7 @@ def lycoris_forward(compvis_module, input, res):
     if len(lycoris.loaded_lycos) == 0:
         return res
     
-    lycoris_layer_name_loading : str | None = getattr(compvis_module, 'lyco_layer_name', None)
+    lycoris_layer_name_loading : Optional[str] = getattr(compvis_module, 'lyco_layer_name', None)
     if lycoris_layer_name_loading is None:
         return res
     #let it type is actually a string
