@@ -70,15 +70,15 @@ class LoRA_data:
         return f"LoRA:{self.name}:{self.weight}"
 
 class LoRA_Weight_CMD:
-    def getWeight(self, weight : float, progress: float, step : int, all_step : int):
+    def getWeight(self, weight : float, progress: float, step : int, all_step : int, custom_scope):
         return weight
 
 class LoRA_Weight_decrement(LoRA_Weight_CMD):
-    def getWeight(self, weight : float, progress: float, step : int, all_step : int):
+    def getWeight(self, weight : float, progress: float, step : int, all_step : int, custom_scope):
         return weight * (1 - progress)
 
 class LoRA_Weight_increment(LoRA_Weight_CMD):
-    def getWeight(self, weight : float, progress: float, step : int, all_step : int):
+    def getWeight(self, weight : float, progress: float, step : int, all_step : int, custom_scope):
         return weight * progress
 
 def raise_(ex):
@@ -128,18 +128,20 @@ class LoRA_Weight_eval(LoRA_Weight_CMD):
         self.module.__dict__.update(LoRA_Weight_eval_scope)
         self.bin = Runable(self.command, code_name)
 
-    def getWeight(self, weight : float, progress: float, step : int, all_step : int):
+    def getWeight(self, weight : float, progress: float, step : int, all_step : int, custom_scope):
 
         result = None
         #setup local variables
+        LoRA_Weight_eval_scope["enable_prepare_step"] = False
         LoRA_Weight_eval_scope["weight"] = weight
-        LoRA_Weight_eval_scope["life"] = progress
+        LoRA_Weight_eval_scope["life"] = progress if step != -1 else 0
         LoRA_Weight_eval_scope["step"] = step
         LoRA_Weight_eval_scope["steps"] = all_step
         LoRA_Weight_eval_scope["warmup"] = lambda x: progress / x if progress < x else 1.0
         LoRA_Weight_eval_scope["cooldown"] = lambda x: (1 - progress) / (1 - x) if progress > x else 1.0
         self.module.__dict__.update(globals())
         self.module.__dict__.update(LoRA_Weight_eval_scope)
+        self.module.__dict__.update(custom_scope)
         try:
             result = self.bin.run(self.module)
             try:
@@ -159,6 +161,8 @@ class LoRA_Weight_eval(LoRA_Weight_CMD):
                 traceback.print_exception(*sys.exc_info())
                 self.is_error = True
             return weight
+        if step == -1 and not self.module.__dict__["enable_prepare_step"]:
+            return weight
 
         return result
     def __repr__(self):
@@ -170,9 +174,13 @@ class LoRA_Controller_Base:
     def __init__(self):
         self.base_weight = 1.0
         self.Weight_Controller = LoRA_Weight_CMD()
-    def getWeight(self, weight : float, progress: float, step : int, all_step : int):
-        return self.Weight_Controller.getWeight(weight, progress, step, all_step)
-    def test(self, test_lora : str, step : int, all_step : int):
+    def getWeight(self, weight : float, progress: float, step : int, all_step : int, custom_scope):
+        result = self.Weight_Controller.getWeight(weight, progress, step, all_step, custom_scope)
+        if step == -1:
+            if not isinstance(self.Weight_Controller, LoRA_Weight_eval):
+                return weight
+        return result
+    def test(self, test_lora : str, step : int, all_step : int, custom_scope):
         return self.base_weight
 
 #normal lora
@@ -181,9 +189,9 @@ class LoRA_Controller(LoRA_Controller_Base):
         super().__init__()
         self.name = name
         self.weight = float(weight)
-    def test(self, test_lora : str, step : int, all_step : int):
+    def test(self, test_lora : str, step : int, all_step : int, custom_scope):
         if test_lora == self.name:
-            return self.getWeight(self.weight, float(step) / float(all_step), step, all_step)
+            return self.getWeight(self.weight, float(step) / float(all_step), step, all_step, custom_scope)
         return 0.0
     def __repr__(self):
         return f"LoRA_Controller:{self.name}[weight={self.weight}]"
@@ -198,8 +206,10 @@ class LoRA_StartEnd_Controller(LoRA_Controller_Base):
         self.weight = float(weight)
         self.start = float(start)
         self.end = float(end)
-    def test(self, test_lora : str, step : int, all_step : int):
+    def test(self, test_lora : str, step : int, all_step : int, custom_scope):
         if test_lora == self.name:
+            if step == -1:
+                return self.getWeight(self.weight, -1, step, all_step, custom_scope)
             start = self.start
             end = self.end
             if start < 1:
@@ -209,7 +219,7 @@ class LoRA_StartEnd_Controller(LoRA_Controller_Base):
             if end < 0:
                 end = all_step
             if (step >= start) and (step <= end):
-                return self.getWeight(self.weight, float(step - start) / float(end - start), step, all_step)
+                return self.getWeight(self.weight, float(step - start) / float(end - start), step, all_step, custom_scope)
         return 0.0
     def __repr__(self):
         return f"LoRA_StartEnd_Controller:{self.name}[weight={self.weight},start at={self.start},end at={self.end}]"
@@ -227,8 +237,10 @@ class LoRA_Switcher_Controller(LoRA_Controller_Base):
         self.end = float(end)
         for lora_item in self.lora_dist:
             self.lora_list.append(lora_item.name)
-    def test(self, test_lora : str, step : int, all_step : int):
+    def test(self, test_lora : str, step : int, all_step : int, custom_scope):
         lora_count = len(self.lora_dist)
+        if step == -1 and test_lora in self.lora_list:
+            return self.getWeight(self.lora_dist[self.lora_list.index(test_lora)].weight, -1, step, all_step, custom_scope)
         if test_lora == self.lora_list[step % lora_count]:
             start = self.start
             end = self.end
@@ -239,7 +251,7 @@ class LoRA_Switcher_Controller(LoRA_Controller_Base):
             if end < 0:
                 end = all_step
             if (step >= start) and (step <= end):
-                return self.getWeight(self.lora_dist[step % lora_count].weight, float(step - start) / float(end - start), step, all_step)
+                return self.getWeight(self.lora_dist[step % lora_count].weight, float(step - start) / float(end - start), step, all_step, custom_scope)
         return 0.0
     def __repr__(self):
         return f"LoRA_Switcher_Controller:{self.lora_dist}[start at={self.start},end at={self.end}]"
@@ -261,10 +273,10 @@ def parse_step_rendering_syntax(prompt: str):
         lora_controllers.append(tmp_lora_controllers)
     return lora_controllers
 
-def check_lora_weight(controllers : List[LoRA_Controller_Base], test_lora : str, step : int, all_step : int):
+def check_lora_weight(controllers : List[LoRA_Controller_Base], test_lora : str, step : int, all_step : int, custom_scope):
     result_weight = 0.0
     for controller in controllers:
-        calc_weight = controller.test(test_lora, step, all_step)
+        calc_weight = controller.test(test_lora, step, all_step, custom_scope)
         if calc_weight > result_weight:
             result_weight = calc_weight
     return result_weight

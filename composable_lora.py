@@ -80,6 +80,7 @@ def load_prompt_loras(prompt: str):
     global is_single_block
     global full_controllers
     global first_log_drawing
+    global full_prompt
     prompt_loras.clear()
     prompt_blocks.clear()
     lora_controllers.clear()
@@ -89,6 +90,7 @@ def load_prompt_loras(prompt: str):
     cache_layer_list.clear()
     #load AND...AND block
     subprompts = re_AND.split(prompt)
+    full_prompt = prompt
     tmp_prompt_loras = []
     tmp_prompt_blocks = []
     for i, subprompt in enumerate(subprompts):
@@ -167,10 +169,19 @@ def log_lora():
     for m_type in [("lora", loaded_loras), ("lyco", loaded_lycos)]:
         for m_lora in m_type[1]:
             m_lora_name = composable_lycoris.normalize_lora_name(m_lora.name)
+            custom_scope = {
+                "lora": m_lora,
+                "lora_module": None,
+                "lora_type": m_type[0],
+                "lora_name": m_lora_name,
+                "layer_name": "ploting",
+                "current_prompt": full_prompt,
+                "sd_processing": sd_processing
+            }
             current_lora = f"{m_type[0]}:{m_lora_name}"
             multiplier = composable_lycoris.lycoris_get_multiplier(m_lora, "lora_layer_name")
             if opt_composable_with_step:
-                multiplier = composable_lora_step.check_lora_weight(full_controllers, current_lora, step_counter, num_steps)
+                multiplier = composable_lora_step.check_lora_weight(full_controllers, current_lora, step_counter, num_steps, custom_scope)
             index = -1
             if current_lora in drawing_lora_names:
                 index = drawing_lora_names.index(current_lora)
@@ -236,6 +247,16 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
     global diffusion_model_counter
     global step_counter
 
+    custom_scope = {
+        "lora": m_lora,
+        "lora_module": module,
+        "lora_type": m_type,
+        "lora_name": composable_lycoris.normalize_lora_name(m_lora.name),
+        "layer_name": lora_layer_name,
+        "current_prompt": "",
+        "sd_processing": sd_processing
+    }
+
     m_lora_name = f"{m_type}:{composable_lycoris.normalize_lora_name(m_lora.name)}"
     # print(f"lora.name={m_lora.name} lora.mul={m_lora.multiplier} alpha={alpha} pat.shape={patch.shape}")
     if enabled:
@@ -243,10 +264,15 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
             #
             if 0 <= text_model_encoder_counter // num_loras < len(prompt_loras):
                 # c
-                loras = prompt_loras[text_model_encoder_counter // num_loras]
+                prompt_block_id = text_model_encoder_counter // num_loras
+                loras = prompt_loras[prompt_block_id]
+                custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
                 multiplier = loras.get(m_lora_name, 0.0)
+                if opt_composable_with_step:
+                    lora_controller = lora_controllers[prompt_block_id]
+                    multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, -1, num_steps, custom_scope)
                 if multiplier != 0.0:
-                    multiplier = composable_lycoris.lycoris_get_multiplier(m_lora, lora_layer_name)
+                    multiplier *= composable_lycoris.lycoris_get_multiplier_normalized(m_lora, lora_layer_name)
                     # print(f"c #{text_model_encoder_counter // num_loras} lora.name={m_lora_name} mul={multiplier}  lora_layer_name={lora_layer_name}")
                     res = composable_lycoris.composable_forward(module, patch, alpha, multiplier, res)
             else:
@@ -274,8 +300,9 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                         multiplier = loras.get(m_lora_name, 0.0)
                         if opt_composable_with_step:
                             prompt_block_id = p
+                            custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
                             lora_controller = lora_controllers[prompt_block_id]
-                            multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, step_counter, num_steps)
+                            multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, step_counter, num_steps, custom_scope)
                         if multiplier != 0.0:
                             multiplier *= composable_lycoris.lycoris_get_multiplier_normalized(m_lora, lora_layer_name)
                             # print(f"tensor #{b}.{p} lora.name={m_lora_name} mul={multiplier} lora_layer_name={lora_layer_name}")
@@ -287,7 +314,7 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                     if (opt_uc_diffusion_model or (is_single_block and (not opt_single_no_uc))) and multiplier != 0.0:
                         # print(f"uncond lora.name={m_lora_name} lora.mul={m_lora.multiplier} lora_layer_name={lora_layer_name}")
                         if is_single_block and opt_composable_with_step:
-                            multiplier = composable_lora_step.check_lora_weight(full_controllers, m_lora_name, step_counter, num_steps)
+                            multiplier = composable_lora_step.check_lora_weight(full_controllers, m_lora_name, step_counter, num_steps, custom_scope)
                             multiplier *= composable_lycoris.lycoris_get_multiplier_normalized(m_lora, lora_layer_name)
                         res[uncond_off] = composable_lycoris.composable_forward(module, patch[uncond_off], alpha, multiplier, res[uncond_off])
                     
@@ -305,8 +332,9 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                             multiplier = loras.get(m_lora_name, 0.0)
                             if opt_composable_with_step:
                                 prompt_block_id = base + off
+                                custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
                                 lora_controller = lora_controllers[prompt_block_id]
-                                multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, step_counter, num_steps)
+                                multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, step_counter, num_steps, custom_scope)
                             if multiplier != 0.0:
                                 multiplier *= composable_lycoris.lycoris_get_multiplier_normalized(m_lora, lora_layer_name)
                                 # print(f"c #{base + off} lora.name={m_lora_name} mul={multiplier} lora_layer_name={lora_layer_name}")
@@ -317,7 +345,7 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                     if (opt_uc_diffusion_model or (is_single_block and (not opt_single_no_uc))) and multiplier != 0.0:
                         # print(f"uc {lora_layer_name} lora.name={m_lora_name} lora.mul={m_lora.multiplier}")
                         if is_single_block and opt_composable_with_step:
-                            multiplier = composable_lora_step.check_lora_weight(full_controllers, m_lora_name, step_counter, num_steps)
+                            multiplier = composable_lora_step.check_lora_weight(full_controllers, m_lora_name, step_counter, num_steps, custom_scope)
                             multiplier *= composable_lycoris.lycoris_get_multiplier_normalized(m_lora, lora_layer_name)
                         res = composable_lycoris.composable_forward(module, patch, alpha, multiplier, res)
 
@@ -387,6 +415,8 @@ opt_plot_lora_weight = False
 opt_single_no_uc = False
 verbose = True
 
+sd_processing = None
+full_prompt: str = ""
 drawing_lora_names : List[str] = []
 drawing_data : List[List[float]] = []
 drawing_lora_first_index : List[float] = []

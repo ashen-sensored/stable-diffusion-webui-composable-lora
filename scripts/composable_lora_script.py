@@ -66,8 +66,10 @@ class ComposableLoraScript(scripts.Script):
 
         prompt = p.all_prompts[0]
         composable_lora.load_prompt_loras(prompt)
+        composable_lora.sd_processing = p
 
     def process_batch(self, p: StableDiffusionProcessing, *args, **kwargs):
+        composable_lora.sd_processing = p
         composable_lora.reset_counters()
 
     def postprocess(self, p, processed, *args):
