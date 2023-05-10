@@ -1,4 +1,5 @@
 from typing import Optional
+import re
 import torch
 from modules import shared
 
@@ -33,7 +34,7 @@ def lycoris_forward(compvis_module, input, res):
             check_lycoris_end_layer(lycoris_layer_name, res, num_loras)
             continue
 
-        current_lora = m_lycoris.name
+        current_lora = normalize_lora_name(m_lycoris.name)
         lora_already_used = False
         if current_lora in tmp_check_loras:
             lora_already_used = True
@@ -61,6 +62,12 @@ def composable_forward(module, patch, alpha, multiplier, res):
     if hasattr(module, 'composable_forward'):
         return module.composable_forward(patch, alpha, multiplier, res)
     return res + multiplier * alpha * patch
+
+re_lora_block_weight = re.compile(r"[_\s]*added[_\s]*by[_\s]*lora[_\s]*block[_\s]*weight[_\s]*.*$")
+
+def normalize_lora_name(lora_name):
+    result = re.sub(r"[_\s]*added[_\s]*by[_\s]*lora[_\s]*block[_\s]*weight[_\s]*.*$", "", lora_name)
+    return result
 
 def get_lora_inference(module, input):
     if hasattr(module, 'inference'): #support for lyCORIS

@@ -55,7 +55,7 @@ def lora_forward(compvis_module, input, res):
             composable_lycoris.check_lycoris_end_layer(lora_layer_name, res, num_loras)
             continue
 
-        current_lora = m_lora.name
+        current_lora = composable_lycoris.normalize_lora_name(m_lora.name)
         lora_already_used = False
         if current_lora in tmp_check_loras:
             lora_already_used = True
@@ -166,7 +166,8 @@ def log_lora():
             drawing_lora_names.append("LoRA Model Not Found.")
     for m_type in [("lora", loaded_loras), ("lyco", loaded_lycos)]:
         for m_lora in m_type[1]:
-            current_lora = f"{m_type[0]}:{m_lora.name}"
+            m_lora_name = composable_lycoris.normalize_lora_name(m_lora.name)
+            current_lora = f"{m_type[0]}:{m_lora_name}"
             multiplier = composable_lycoris.lycoris_get_multiplier(m_lora, "lora_layer_name")
             if opt_composable_with_step:
                 multiplier = composable_lora_step.check_lora_weight(full_controllers, current_lora, step_counter, num_steps)
@@ -234,7 +235,8 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
     global text_model_encoder_counter
     global diffusion_model_counter
     global step_counter
-    m_lora_name = f"{m_type}:{m_lora.name}"
+
+    m_lora_name = f"{m_type}:{composable_lycoris.normalize_lora_name(m_lora.name)}"
     # print(f"lora.name={m_lora.name} lora.mul={m_lora.multiplier} alpha={alpha} pat.shape={patch.shape}")
     if enabled:
         if lora_layer_name.startswith("transformer_"):  # "transformer_text_model_encoder_"
