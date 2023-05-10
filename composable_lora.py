@@ -169,15 +169,17 @@ def log_lora():
     for m_type in [("lora", loaded_loras), ("lyco", loaded_lycos)]:
         for m_lora in m_type[1]:
             m_lora_name = composable_lycoris.normalize_lora_name(m_lora.name)
-            custom_scope = {
-                "lora": m_lora,
-                "lora_module": None,
-                "lora_type": m_type[0],
-                "lora_name": m_lora_name,
-                "layer_name": "ploting",
-                "current_prompt": full_prompt,
-                "sd_processing": sd_processing
-            }
+            custom_scope = {}
+            if opt_composable_with_step:
+                custom_scope = {
+                    "lora": m_lora,
+                    "lora_module": None,
+                    "lora_type": m_type[0],
+                    "lora_name": m_lora_name,
+                    "layer_name": "ploting",
+                    "current_prompt": full_prompt,
+                    "sd_processing": sd_processing
+                }
             current_lora = f"{m_type[0]}:{m_lora_name}"
             multiplier = composable_lycoris.lycoris_get_multiplier(m_lora, "lora_layer_name")
             if opt_composable_with_step:
@@ -247,15 +249,17 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
     global diffusion_model_counter
     global step_counter
 
-    custom_scope = {
-        "lora": m_lora,
-        "lora_module": module,
-        "lora_type": m_type,
-        "lora_name": composable_lycoris.normalize_lora_name(m_lora.name),
-        "layer_name": lora_layer_name,
-        "current_prompt": "",
-        "sd_processing": sd_processing
-    }
+    custom_scope = {}
+    if opt_composable_with_step:
+        custom_scope = {
+            "lora": m_lora,
+            "lora_module": module,
+            "lora_type": m_type,
+            "lora_name": composable_lycoris.normalize_lora_name(m_lora.name),
+            "layer_name": lora_layer_name,
+            "current_prompt": "",
+            "sd_processing": sd_processing
+        }
 
     m_lora_name = f"{m_type}:{composable_lycoris.normalize_lora_name(m_lora.name)}"
     # print(f"lora.name={m_lora.name} lora.mul={m_lora.multiplier} alpha={alpha} pat.shape={patch.shape}")
@@ -266,9 +270,9 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                 # c
                 prompt_block_id = text_model_encoder_counter // num_loras
                 loras = prompt_loras[prompt_block_id]
-                custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
                 multiplier = loras.get(m_lora_name, 0.0)
                 if opt_composable_with_step:
+                    custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
                     lora_controller = lora_controllers[prompt_block_id]
                     multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, -1, num_steps, custom_scope)
                 if multiplier != 0.0:
