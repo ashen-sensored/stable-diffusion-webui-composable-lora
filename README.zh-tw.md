@@ -51,6 +51,28 @@ https://github.com/a2569875/stable-diffusion-webui-composable-lora.git
                  * 目前的步驟數
              + `steps`
                  * 總共的步驟數
+             + `lora`
+                 * 目前的LoRA物件
+             + `lora_module`
+                 * 目前的LoRA作用層物件
+             + `lora_type`
+                 * 目前的LoRA載入的種類，可能是`lora`或`lyco`
+             + `lora_name`
+                 * 目前的LoRA名稱
+             + `lora_count`
+                 * 所有LoRA的數量
+             + `block_lora_count`
+                 * 作用中的`AND...AND`區塊內LoRA的數量
+             + `is_negative`
+                 * 是否為反向提示詞
+             + `layer_name`
+                 * 目前作用層名稱。你可以用這來來判斷並模擬[LoRA Block Weight](https://github.com/hako-mikan/sd-webui-lora-block-weight)的效果
+             + `current_prompt`
+                 * 作用中的`AND...AND`區塊內的提示詞
+             + `sd_processing`
+                 * sd圖片生成的參數
+             + `enable_prepare_step`
+                 * (輸出用參數) 如果設為True，則代表此權重會做用到transformer text model encoder層。如過step==-1代表目前在transformer text model encoder層。
          * 可用函數
              + `warmup(x)`
                  * x為0-1之間的數字，表示一個預熱的常數，以總步數計算，在低於x比例的步數時，函數值從0逐漸遞增，直到x之後為1

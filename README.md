@@ -51,6 +51,28 @@ Currently supported options are:
                  * The current step number.
              + `steps`
                  * The total number of steps.
+             + `lora`
+                 * The current LoRA object.
+             + `lora_module`
+                 * The current LoRA working layer object.
+             + `lora_type`
+                 * The type of LoRA being loaded, which may be `lora` or `lyco`.
+             + `lora_name`
+                 * The name of the current LoRA.
+             + `lora_count`
+                 * The number of all LoRAs.
+             + `block_lora_count`
+                 * The number of LoRAs in the `AND...AND` block currently being used.
+             + `is_negative`
+                 * Whether it is a negative prompt.
+             + `layer_name`
+                 * The name of the current working layer. You can use this to determine and simulate the effect of [LoRA Block Weight](https://github.com/hako-mikan/sd-webui-lora-block-weight).
+             + `current_prompt`
+                 * The prompt currently being used in the `AND...AND` block.
+             + `sd_processing`
+                 * Parameters for generating the SD image.
+             + `enable_prepare_step`
+                 * (Output parameter) If set to True, it means that this weight will be applied to the transformer text model encoder layer. If step == -1, it means that the current layer is in the transformer text model encoder layer.
          * Available functions
              + `warmup(x)`
                  * x is a number between 0-1, representing a warmup constant. Calculated based on the total number of steps, the function value gradually increases from 0 to 1 until x is reached.

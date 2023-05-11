@@ -172,10 +172,13 @@ def log_lora():
             custom_scope = {}
             if opt_composable_with_step:
                 custom_scope = {
+                    "is_negative": False,
                     "lora": m_lora,
                     "lora_module": None,
                     "lora_type": m_type[0],
                     "lora_name": m_lora_name,
+                    "lora_count": len(loaded_loras) + len(loaded_lycos),
+                    "block_lora_count": len(loaded_loras) + len(loaded_lycos),
                     "layer_name": "ploting",
                     "current_prompt": full_prompt,
                     "sd_processing": sd_processing
@@ -252,10 +255,13 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
     custom_scope = {}
     if opt_composable_with_step:
         custom_scope = {
+            "is_negative": False,
             "lora": m_lora,
             "lora_module": module,
             "lora_type": m_type,
             "lora_name": composable_lycoris.normalize_lora_name(m_lora.name),
+            "lora_count": num_loras,
+            "block_lora_count": 0,
             "layer_name": lora_layer_name,
             "current_prompt": "",
             "sd_processing": sd_processing
@@ -273,6 +279,7 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                 multiplier = loras.get(m_lora_name, 0.0)
                 if opt_composable_with_step:
                     custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
+                    custom_scope["block_lora_count"] = len(loras)
                     lora_controller = lora_controllers[prompt_block_id]
                     multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, -1, num_steps, custom_scope)
                 if multiplier != 0.0:
@@ -284,6 +291,8 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                 multiplier = composable_lycoris.lycoris_get_multiplier(m_lora, lora_layer_name)
                 if (opt_uc_text_model_encoder or (is_single_block and (not opt_single_no_uc))) and multiplier != 0.0:
                     # print(f"uc #{text_model_encoder_counter // num_loras} lora.name={m_lora_name} lora.mul={multiplier}  lora_layer_name={lora_layer_name}")
+                    custom_scope["current_prompt"] = negative_prompt
+                    custom_scope["is_negative"] = True
                     res = composable_lycoris.composable_forward(module, patch, alpha, multiplier, res)
 
             if lora_layer_name.endswith("_11_mlp_fc2"):  # last lora_layer_name of text_model_encoder
@@ -305,6 +314,7 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                         if opt_composable_with_step:
                             prompt_block_id = p
                             custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
+                            custom_scope["block_lora_count"] = len(loras)
                             lora_controller = lora_controllers[prompt_block_id]
                             multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, step_counter, num_steps, custom_scope)
                         if multiplier != 0.0:
@@ -318,6 +328,8 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                     if (opt_uc_diffusion_model or (is_single_block and (not opt_single_no_uc))) and multiplier != 0.0:
                         # print(f"uncond lora.name={m_lora_name} lora.mul={m_lora.multiplier} lora_layer_name={lora_layer_name}")
                         if is_single_block and opt_composable_with_step:
+                            custom_scope["current_prompt"] = negative_prompt
+                            custom_scope["is_negative"] = True
                             multiplier = composable_lora_step.check_lora_weight(full_controllers, m_lora_name, step_counter, num_steps, custom_scope)
                             multiplier *= composable_lycoris.lycoris_get_multiplier_normalized(m_lora, lora_layer_name)
                         res[uncond_off] = composable_lycoris.composable_forward(module, patch[uncond_off], alpha, multiplier, res[uncond_off])
@@ -337,6 +349,7 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                             if opt_composable_with_step:
                                 prompt_block_id = base + off
                                 custom_scope["current_prompt"] = prompt_blocks[prompt_block_id]
+                                custom_scope["block_lora_count"] = len(loras)
                                 lora_controller = lora_controllers[prompt_block_id]
                                 multiplier = composable_lora_step.check_lora_weight(lora_controller, m_lora_name, step_counter, num_steps, custom_scope)
                             if multiplier != 0.0:
@@ -349,6 +362,8 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
                     if (opt_uc_diffusion_model or (is_single_block and (not opt_single_no_uc))) and multiplier != 0.0:
                         # print(f"uc {lora_layer_name} lora.name={m_lora_name} lora.mul={m_lora.multiplier}")
                         if is_single_block and opt_composable_with_step:
+                            custom_scope["current_prompt"] = negative_prompt
+                            custom_scope["is_negative"] = True
                             multiplier = composable_lora_step.check_lora_weight(full_controllers, m_lora_name, step_counter, num_steps, custom_scope)
                             multiplier *= composable_lycoris.lycoris_get_multiplier_normalized(m_lora, lora_layer_name)
                         res = composable_lycoris.composable_forward(module, patch, alpha, multiplier, res)
@@ -421,6 +436,7 @@ verbose = True
 
 sd_processing = None
 full_prompt: str = ""
+negative_prompt: str = ""
 drawing_lora_names : List[str] = []
 drawing_data : List[List[float]] = []
 drawing_lora_first_index : List[float] = []

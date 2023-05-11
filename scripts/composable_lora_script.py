@@ -65,6 +65,7 @@ class ComposableLoraScript(scripts.Script):
         composable_lora.reset_step_counters()
 
         prompt = p.all_prompts[0]
+        composable_lora.negative_prompt = p.all_negative_prompts[0]
         composable_lora.load_prompt_loras(prompt)
         composable_lora.sd_processing = p
 

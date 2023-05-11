@@ -48,6 +48,28 @@ LoRAの挿入箇所を`AND`構文と関連付け、LoRAの影響範囲を特定�
                  * 現在のステップ数
              + `steps`
                  * 全ステップ数
+             + `lora`
+                 * 現在のLoRAオブジェクト
+             + `lora_module`
+                 * 現在のLoRA作用層オブジェクト
+             + `lora_type`
+                 * 現在のLoRAのロードされた種類で、`lora`または`lyco`のいずれかです。
+             + `lora_name`
+                 * 現在のLoRAの名前
+             + `lora_count`
+                 * すべてのLoRAの数
+             + `block_lora_count`
+                 * 作用中の`AND...AND`ブロック内のLoRAの数
+             + `is_negative`
+                 * 反転提示語であるかどうか
+             + `layer_name`
+                 * 現在の作用層の名前。これを使用して、[LoRA Block Weight](https://github.com/hako-mikan/sd-webui-lora-block-weight)の効果をシミュレートできます。
+             + `current_prompt`
+                 * 作用中の`AND...AND`ブロック内のプロンプト
+             + `sd_processing`
+                 * sd画像の生成パラメータ
+             + `enable_prepare_step`
+                 * (出力用パラメータ) Trueに設定すると、この重みがtransformer text model encoder層に適用されます。 step == -1の場合は、現在transformer text model encoder層にいます。
          * 使用可能な関数は以下の通りです
              + `warmup(x)`
                  * xは0から1までの数値で、総ステップ数に対して、xの比率以下のステップでは関数値が0から1に徐々に上昇し、x以降は1になります。
