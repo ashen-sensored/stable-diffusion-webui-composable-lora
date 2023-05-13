@@ -6,6 +6,7 @@ def on_enable():
     #backup original forward methods
     composable_lora.backup_lora_Linear_forward = torch.nn.Linear.forward
     composable_lora.backup_lora_Conv2d_forward = torch.nn.Conv2d.forward
+    composable_lora.backup_lora_MultiheadAttention_forward = torch.nn.MultiheadAttention.forward
 
     if hasattr(torch.nn, 'Linear_forward_before_lyco'):
         #if a1111-sd-webui-lycoris installed, backup it's forward methods
@@ -39,6 +40,7 @@ def on_enable():
 def on_disable():
     torch.nn.Linear.forward = composable_lora.backup_lora_Linear_forward
     torch.nn.Conv2d.forward = composable_lora.backup_lora_Conv2d_forward
+    torch.nn.MultiheadAttention.forward = composable_lora.backup_lora_MultiheadAttention_forward
     if hasattr(torch.nn, 'Linear_forward_before_lyco'):
         composable_lycoris.has_webui_lycoris = True
         if hasattr(composable_lycoris, 'backup_Linear_forward_before_lyco'):

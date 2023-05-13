@@ -1,10 +1,10 @@
-from typing import Optional
+from typing import Optional, Union
 import re
 import torch
 from modules import shared
 
 #support for <lyco:MODEL> 
-def lycoris_forward(compvis_module, input, res):
+def lycoris_forward(compvis_module: Union[torch.nn.Conv2d, torch.nn.Linear, torch.nn.MultiheadAttention], input, res):
     import composable_lora as lora_controller
     import lora
     import lycoris

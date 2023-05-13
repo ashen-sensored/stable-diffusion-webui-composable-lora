@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import re
 import torch
 import composable_lora_step
@@ -6,7 +6,7 @@ import composable_lycoris
 import plot_helper
 from modules import extra_networks, devices
 
-def lora_forward(compvis_module, input, res):
+def lora_forward(compvis_module: Union[torch.nn.Conv2d, torch.nn.Linear, torch.nn.MultiheadAttention], input, res):
     global text_model_encoder_counter
     global diffusion_model_counter
     global step_counter
@@ -413,6 +413,21 @@ def lora_Conv2d_forward(self, input):
         del self.weight #avoid "cannot assign XXX as parameter YYY (torch.nn.Parameter or None expected)"
         self.weight = self_weight_cuda
     res = torch.nn.Conv2d_forward_before_lora(self, input)
+    res = lora_forward(self, input, res)
+    if composable_lycoris.has_webui_lycoris:
+        res = composable_lycoris.lycoris_forward(self, input, res)
+    return res
+
+def lora_MultiheadAttention_forward(self, input):
+    clear_cache_lora(self)
+    if (not self.weight.is_cuda) and input.is_cuda:
+        self_weight_cuda = self.weight.cuda()
+        to_del = self.weight
+        self.weight = None
+        del to_del
+        del self.weight #avoid "cannot assign XXX as parameter YYY (torch.nn.Parameter or None expected)"
+        self.weight = self_weight_cuda
+    res = torch.nn.MultiheadAttention_forward_before_lora(self, input)
     res = lora_forward(self, input, res)
     if composable_lycoris.has_webui_lycoris:
         res = composable_lycoris.lycoris_forward(self, input, res)

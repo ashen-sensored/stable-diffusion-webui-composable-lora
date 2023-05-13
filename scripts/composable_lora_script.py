@@ -13,6 +13,7 @@ from modules.processing import StableDiffusionProcessing
 def unload():
     torch.nn.Linear.forward = torch.nn.Linear_forward_before_lora
     torch.nn.Conv2d.forward = torch.nn.Conv2d_forward_before_lora
+    torch.nn.MultiheadAttention.forward = torch.nn.MultiheadAttention_forward_before_lora
 
 if not hasattr(torch.nn, 'Linear_forward_before_lora'):
     if hasattr(torch.nn, 'Linear_forward_before_lyco'):
@@ -25,6 +26,12 @@ if not hasattr(torch.nn, 'Conv2d_forward_before_lora'):
         torch.nn.Conv2d_forward_before_lora = torch.nn.Conv2d_forward_before_lyco
     else:
         torch.nn.Conv2d_forward_before_lora = torch.nn.Conv2d.forward
+
+if not hasattr(torch.nn, 'MultiheadAttention_forward_before_lora'):
+    if hasattr(torch.nn, 'MultiheadAttention_forward_before_lyco'):
+        torch.nn.MultiheadAttention_forward_before_lora = torch.nn.MultiheadAttention_forward_before_lyco
+    else:
+        torch.nn.MultiheadAttention_forward_before_lora = torch.nn.MultiheadAttention.forward
 
 torch.nn.Linear.forward = composable_lora.lora_Linear_forward
 torch.nn.Conv2d.forward = composable_lora.lora_Conv2d_forward
