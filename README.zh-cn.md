@@ -22,6 +22,25 @@ https://github.com/a2569875/stable-diffusion-webui-composable-lora.git
 ```
 安装并重启即可
 
+## 演示
+这里示范两个LoRA (分别为LoHA和LoCon) ，其中
+* [`<lora:roukin8_loha:0.8>`](https://civitai.com/models/17336/roukin8-character-lohaloconfullckpt-8) 对应的触发词: `yamanomitsuha`
+* `<lora:dia_viekone_locon:0.7>` 对应的触发词: `dia_viekone_\(ansatsu_kizoku\)`
+
+并搭配[Latent Couple extension](https://github.com/opparco/stable-diffusion-webui-two-shot)
+
+效果如下:
+![](readme/fig11.png)
+可以看到:
+- 当我`<lora:roukin8_loha:0.8>`搭配`yamanomitsuha`，以及`<lora:dia_viekone_locon:0.7>`搭配`dia_viekone_\(ansatsu_kizoku\)`的组合可以顺利画出对应角色；
+- 当模型触发词互相交换而导致不匹配时，两个角色都无法顺利画出，可见`<lora:roukin8_loha:0.8>`被限制在只作用于图片的左半边区块、而`<lora:dia_viekone_locon:0.7>`被限制在只作用于图片的右半边区块，因此这个算法是有效的。
+
+图片上的提示词语法使用[sd-webui-prompt-highlight](https://github.com/a2569875/sd-webui-prompt-highlight)插件進行上色。
+
+本次测试于2023年5月14日完成，使用Stable Diffusion WebUI版本为[v1.2 (89f9faa)](https://github.com/AUTOMATIC1111/stable-diffusion-webui/commit/89f9faa63388756314e8a1d96cf86bf5e0663045)
+
+(Note: You should enable \[`Lora: use old method that takes longer when you have multiple Loras active and produces same results as kohya-ss/sd-webui-additional-networks extension`\] in setting page.)
+
 ## 功能
 ### 与 Composable-Diffusion 兼容
 将 LoRA 在提示词中的插入位置与`AND`语法相关系，让 LoRA 的影响范围限制在特定的子提示词中 (特定 AND...AND区块中)。

@@ -1,7 +1,7 @@
 from typing import Optional, Union
 import re
 import torch
-from modules import shared
+from modules import shared, devices
 
 #support for <lyco:MODEL> 
 def lycoris_forward(compvis_module: Union[torch.nn.Conv2d, torch.nn.Linear, torch.nn.MultiheadAttention], input, res):
@@ -11,6 +11,9 @@ def lycoris_forward(compvis_module: Union[torch.nn.Conv2d, torch.nn.Linear, torc
     if len(lycoris.loaded_lycos) == 0:
         return res
     
+    if hasattr(devices, "cond_cast_unet"):
+        input = devices.cond_cast_unet(input)
+
     lycoris_layer_name_loading : Optional[str] = getattr(compvis_module, 'lyco_layer_name', None)
     if lycoris_layer_name_loading is None:
         return res
@@ -73,6 +76,10 @@ def get_lora_inference(module, input):
     if hasattr(module, 'inference'): #support for lyCORIS
         return module.inference(input)
     elif hasattr(module, 'up'):     #LoRA
+        if hasattr(module.up, "to"):
+            module.up.to(device=devices.device)
+        if hasattr(module.down, "to"):
+            module.down.to(device=devices.device)
         return module.up(module.down(input))
     else:
         return None
@@ -458,7 +465,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'bias'):
         if isinstance(m_loha.bias, torch.Tensor):
             if not m_loha.bias.is_cuda:
-                to_cuda = m_loha.bias.cuda()
+                to_cuda = m_loha.bias.to(device=devices.device)
                 to_del = m_loha.bias
                 m_loha.bias = None
                 del to_del
@@ -467,7 +474,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 't1'):
         if isinstance(m_loha.t1, torch.Tensor):
             if not m_loha.t1.is_cuda:
-                to_cuda = m_loha.t1.cuda()
+                to_cuda = m_loha.t1.to(device=devices.device)
                 to_del = m_loha.t1
                 m_loha.t1 = None
                 del to_del
@@ -476,7 +483,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 't2'):
         if isinstance(m_loha.t2, torch.Tensor):
             if not m_loha.t2.is_cuda:
-                to_cuda = m_loha.t2.cuda()
+                to_cuda = m_loha.t2.to(device=devices.device)
                 to_del = m_loha.t2
                 m_loha.t2 = None
                 del to_del
@@ -485,7 +492,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'w'):
         if isinstance(m_loha.w, torch.Tensor):
             if not m_loha.w.is_cuda:
-                to_cuda = m_loha.w.cuda()
+                to_cuda = m_loha.w.to(device=devices.device)
                 to_del = m_loha.w
                 m_loha.w = None
                 del to_del
@@ -494,7 +501,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'w1'):
         if isinstance(m_loha.w1, torch.Tensor):
             if not m_loha.w1.is_cuda:
-                to_cuda = m_loha.w1.cuda()
+                to_cuda = m_loha.w1.to(device=devices.device)
                 to_del = m_loha.w1
                 m_loha.w1 = None
                 del to_del
@@ -503,7 +510,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'w1a'):
         if isinstance(m_loha.w1a, torch.Tensor):
             if not m_loha.w1a.is_cuda:
-                to_cuda = m_loha.w1a.cuda()
+                to_cuda = m_loha.w1a.to(device=devices.device)
                 to_del = m_loha.w1a
                 m_loha.w1a = None
                 del to_del
@@ -512,7 +519,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'w1b'):
         if isinstance(m_loha.w1b, torch.Tensor):
             if not m_loha.w1b.is_cuda:
-                to_cuda = m_loha.w1b.cuda()
+                to_cuda = m_loha.w1b.to(device=devices.device)
                 to_del = m_loha.w1b
                 m_loha.w1b = None
                 del to_del
@@ -521,7 +528,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'w2'):
         if isinstance(m_loha.w2, torch.Tensor):
             if not m_loha.w2.is_cuda:
-                to_cuda = m_loha.w2.cuda()
+                to_cuda = m_loha.w2.to(device=devices.device)
                 to_del = m_loha.w2
                 m_loha.w2 = None
                 del to_del
@@ -530,7 +537,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'w2a'):
         if isinstance(m_loha.w2a, torch.Tensor):
             if not m_loha.w2a.is_cuda:
-                to_cuda = m_loha.w2a.cuda()
+                to_cuda = m_loha.w2a.to(device=devices.device)
                 to_del = m_loha.w2a
                 m_loha.w2a = None
                 del to_del
@@ -539,7 +546,7 @@ def pass_loha_to_gpu(m_loha):
     if hasattr(m_loha, 'w2b'):
         if isinstance(m_loha.w2b, torch.Tensor):
             if not m_loha.w2b.is_cuda:
-                to_cuda = m_loha.w2b.cuda()
+                to_cuda = m_loha.w2b.to(device=devices.device)
                 to_del = m_loha.w2b
                 m_loha.w2b = None
                 del to_del

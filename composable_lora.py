@@ -30,6 +30,9 @@ def lora_forward(compvis_module: Union[torch.nn.Conv2d, torch.nn.Linear, torch.n
 
     if len(lora.loaded_loras) == 0:
         return res
+    
+    if hasattr(devices, "cond_cast_unet"):
+        input = devices.cond_cast_unet(input)
 
     lora_layer_name_loading : Optional[str] = getattr(compvis_module, 'lora_layer_name', None)
     if lora_layer_name_loading is None:
@@ -391,7 +394,7 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
 def lora_Linear_forward(self, input):
     clear_cache_lora(self)
     if (not self.weight.is_cuda) and input.is_cuda: #if variables not on the same device (between cpu and gpu)
-        self_weight_cuda = self.weight.cuda() #pass to GPU
+        self_weight_cuda = self.weight.to(device=devices.device) #pass to GPU
         to_del = self.weight
         self.weight = None                    #delete CPU variable
         del to_del
@@ -406,7 +409,7 @@ def lora_Linear_forward(self, input):
 def lora_Conv2d_forward(self, input):
     clear_cache_lora(self)
     if (not self.weight.is_cuda) and input.is_cuda:
-        self_weight_cuda = self.weight.cuda()
+        self_weight_cuda = self.weight.to(device=devices.device)
         to_del = self.weight
         self.weight = None
         del to_del
@@ -421,7 +424,7 @@ def lora_Conv2d_forward(self, input):
 def lora_MultiheadAttention_forward(self, input):
     clear_cache_lora(self)
     if (not self.weight.is_cuda) and input.is_cuda:
-        self_weight_cuda = self.weight.cuda()
+        self_weight_cuda = self.weight.to(device=devices.device)
         to_del = self.weight
         self.weight = None
         del to_del

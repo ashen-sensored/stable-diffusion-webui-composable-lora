@@ -22,6 +22,26 @@ https://github.com/a2569875/stable-diffusion-webui-composable-lora.git
 ```
 インストールして再起動します。
 
+## デモ
+ここでは2つのLoRA（1つはLoHA、もう1つはLoCon）を紹介します。 
+* [`<lora:roukin8_loha:0.8>`](https://civitai.com/models/17336/roukin8-character-lohaloconfullckpt-8) に対応するトリガーワード： `yamanomitsuha`
+* `<lora:dia_viekone_locon:0.7>` に対応するトリガーワード： `dia_viekone_\(ansatsu_kizoku\)`
+
+[Latent Couple extension](https://github.com/opparco/stable-diffusion-webui-two-shot)と組み合わせます。
+
+以下はその効果です。
+![](readme/fig11.png)
+
+以下のことが分かります。
+- `<lora:roukin8_loha:0.8>`を`yamanomitsuha`と組み合わせ、そして`<lora:dia_viekone_locon:0.7>`を`dia_viekone_\(ansatsu_kizoku\)`と組み合わせることで、対応するキャラクターを描画できます。
+- モデルのトリガーワードが互いに交換され、一致しなくなった場合、2つのキャラクターは描画できません。これは`<lora:roukin8_loha:0.8>`が画像の左側のブロックにのみ制限されているため、そして`<lora:dia_viekone_locon:0.7>`が画像の右側のブロックにのみ制限されているためです。したがって、このアルゴリズムは有効です。
+
+画像のヒントの文法には[sd-webui-prompt-highlight](https://github.com/a2569875/sd-webui-prompt-highlight)プラグインが使用されています。
+
+このテストは2023年5月14日に行われ、使用されたStable Diffusion WebUIのバージョンは[v1.2 (89f9faa)](https://github.com/AUTOMATIC1111/stable-diffusion-webui/commit/89f9faa63388756314e8a1d96cf86bf5e0663045)です。
+
+(Note: You should enable \[`Lora: use old method that takes longer when you have multiple Loras active and produces same results as kohya-ss/sd-webui-additional-networks extension`\] in setting page.)
+
 ## 機能
 ### Composable-Diffusionと互換性がある
 LoRAの挿入箇所を`AND`構文と関連付け、LoRAの影響範囲を特定のサブプロンプト内に限定します（特定の`AND...AND`ブロック内）。
