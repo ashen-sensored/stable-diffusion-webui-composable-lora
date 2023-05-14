@@ -25,7 +25,7 @@ Install and restart to complete the process.
 ## Demo
 Here we demonstrate two LoRAs (one LoHA and one LoCon), where
 * [`<lora:roukin8_loha:0.8>`](https://civitai.com/models/17336/roukin8-character-lohaloconfullckpt-8) corresponds to the trigger word `yamanomitsuha`
-* `<lora:dia_viekone_locon:0.7>` corresponds to the trigger word `dia_viekone_\(ansatsu_kizoku\)`
+* `<lora:dia_viekone_locon:0.8>` corresponds to the trigger word `dia_viekone_\(ansatsu_kizoku\)`
 
 We use the [Latent Couple extension](https://github.com/opparco/stable-diffusion-webui-two-shot) for generating the images.
 
@@ -33,8 +33,8 @@ The results are shown below:
 ![](readme/fig11.png)
 
 It can be observed that:
-- The combination of `<lora:roukin8_loha:0.8>` with `yamanomitsuha`, and `<lora:dia_viekone_locon:0.7>` with `dia_viekone_\(ansatsu_kizoku\)` can successfully generate the corresponding characters.
-- When the trigger words are swapped, causing a mismatch, both characters cannot be generated successfully. This demonstrates that `<lora:roukin8_loha:0.8>` is restricted to the left half of the image, while `<lora:dia_viekone_locon:0.7>` is restricted to the right half of the image. Therefore, the algorithm is effective.
+- The combination of `<lora:roukin8_loha:0.8>` with `yamanomitsuha`, and `<lora:dia_viekone_locon:0.8>` with `dia_viekone_\(ansatsu_kizoku\)` can successfully generate the corresponding characters.
+- When the trigger words are swapped, causing a mismatch, both characters cannot be generated successfully. This demonstrates that `<lora:roukin8_loha:0.8>` is restricted to the left half of the image, while `<lora:dia_viekone_locon:0.8>` is restricted to the right half of the image. Therefore, the algorithm is effective.
 
 The highlighting of the prompt words on the image is done using the [sd-webui-prompt-highlight](https://github.com/a2569875/sd-webui-prompt-highlight) plugin.
 

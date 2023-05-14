@@ -25,15 +25,15 @@ https://github.com/a2569875/stable-diffusion-webui-composable-lora.git
 ## 演示
 这里示范两个LoRA (分别为LoHA和LoCon) ，其中
 * [`<lora:roukin8_loha:0.8>`](https://civitai.com/models/17336/roukin8-character-lohaloconfullckpt-8) 对应的触发词: `yamanomitsuha`
-* `<lora:dia_viekone_locon:0.7>` 对应的触发词: `dia_viekone_\(ansatsu_kizoku\)`
+* `<lora:dia_viekone_locon:0.8>` 对应的触发词: `dia_viekone_\(ansatsu_kizoku\)`
 
 并搭配[Latent Couple extension](https://github.com/opparco/stable-diffusion-webui-two-shot)
 
 效果如下:
 ![](readme/fig11.png)
 可以看到:
-- 当我`<lora:roukin8_loha:0.8>`搭配`yamanomitsuha`，以及`<lora:dia_viekone_locon:0.7>`搭配`dia_viekone_\(ansatsu_kizoku\)`的组合可以顺利画出对应角色；
-- 当模型触发词互相交换而导致不匹配时，两个角色都无法顺利画出，可见`<lora:roukin8_loha:0.8>`被限制在只作用于图片的左半边区块、而`<lora:dia_viekone_locon:0.7>`被限制在只作用于图片的右半边区块，因此这个算法是有效的。
+- 当我`<lora:roukin8_loha:0.8>`搭配`yamanomitsuha`，以及`<lora:dia_viekone_locon:0.8>`搭配`dia_viekone_\(ansatsu_kizoku\)`的组合可以顺利画出对应角色；
+- 当模型触发词互相交换而导致不匹配时，两个角色都无法顺利画出，可见`<lora:roukin8_loha:0.8>`被限制在只作用于图片的左半边区块、而`<lora:dia_viekone_locon:0.8>`被限制在只作用于图片的右半边区块，因此这个算法是有效的。
 
 图片上的提示词语法使用[sd-webui-prompt-highlight](https://github.com/a2569875/sd-webui-prompt-highlight)插件進行上色。
 

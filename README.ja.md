@@ -25,7 +25,7 @@ https://github.com/a2569875/stable-diffusion-webui-composable-lora.git
 ## デモ
 ここでは2つのLoRA（1つはLoHA、もう1つはLoCon）を紹介します。 
 * [`<lora:roukin8_loha:0.8>`](https://civitai.com/models/17336/roukin8-character-lohaloconfullckpt-8) に対応するトリガーワード： `yamanomitsuha`
-* `<lora:dia_viekone_locon:0.7>` に対応するトリガーワード： `dia_viekone_\(ansatsu_kizoku\)`
+* `<lora:dia_viekone_locon:0.8>` に対応するトリガーワード： `dia_viekone_\(ansatsu_kizoku\)`
 
 [Latent Couple extension](https://github.com/opparco/stable-diffusion-webui-two-shot)と組み合わせます。
 
@@ -33,8 +33,8 @@ https://github.com/a2569875/stable-diffusion-webui-composable-lora.git
 ![](readme/fig11.png)
 
 以下のことが分かります。
-- `<lora:roukin8_loha:0.8>`を`yamanomitsuha`と組み合わせ、そして`<lora:dia_viekone_locon:0.7>`を`dia_viekone_\(ansatsu_kizoku\)`と組み合わせることで、対応するキャラクターを描画できます。
-- モデルのトリガーワードが互いに交換され、一致しなくなった場合、2つのキャラクターは描画できません。これは`<lora:roukin8_loha:0.8>`が画像の左側のブロックにのみ制限されているため、そして`<lora:dia_viekone_locon:0.7>`が画像の右側のブロックにのみ制限されているためです。したがって、このアルゴリズムは有効です。
+- `<lora:roukin8_loha:0.8>`を`yamanomitsuha`と組み合わせ、そして`<lora:dia_viekone_locon:0.8>`を`dia_viekone_\(ansatsu_kizoku\)`と組み合わせることで、対応するキャラクターを描画できます。
+- モデルのトリガーワードが互いに交換され、一致しなくなった場合、2つのキャラクターは描画できません。これは`<lora:roukin8_loha:0.8>`が画像の左側のブロックにのみ制限されているため、そして`<lora:dia_viekone_locon:0.8>`が画像の右側のブロックにのみ制限されているためです。したがって、このアルゴリズムは有効です。
 
 画像のヒントの文法には[sd-webui-prompt-highlight](https://github.com/a2569875/sd-webui-prompt-highlight)プラグインが使用されています。
 
