@@ -36,7 +36,15 @@ if not hasattr(torch.nn, 'MultiheadAttention_forward_before_lora'):
 torch.nn.Linear.forward = composable_lora.lora_Linear_forward
 torch.nn.Conv2d.forward = composable_lora.lora_Conv2d_forward
 
+def check_install_state():
+    if not hasattr(composable_lora, "should_reload"):
+        import warnings
+        warnings.warn( #NOTICE: You Must Restart the WebUI after Install composable_lora!
+            "module 'composable_lora' not found! Please reinstall composable_lora and restart the WebUI.")
+
 script_callbacks.on_script_unloaded(unload)
+script_callbacks.on_before_reload(check_install_state)
+script_callbacks.on_before_ui(check_install_state)
 
 class ComposableLoraScript(scripts.Script):
     def title(self):
@@ -48,6 +56,8 @@ class ComposableLoraScript(scripts.Script):
     def ui(self, is_img2img):
         with gr.Group():
             with gr.Accordion("Composable Lora", open=False):
+                if not hasattr(composable_lora, "should_reload"):
+                    gr.Markdown('<span style="color:red">Error! Composable Lora install failed! Please reinstall composable_lora and restart the WebUI.</span>')
                 enabled = gr.Checkbox(value=False, label="Enabled")
                 opt_composable_with_step = gr.Checkbox(value=False, label="Composable LoRA with step")
                 opt_uc_text_model_encoder = gr.Checkbox(value=False, label="Use Lora in uc text model encoder")
@@ -68,6 +78,9 @@ class ComposableLoraScript(scripts.Script):
         composable_lora.num_batches = p.batch_size
         composable_lora.num_steps = p.steps
 
+        if not hasattr(composable_lora, "should_reload"):
+            raise ModuleNotFoundError( #NOTICE: You Must Restart the WebUI after Install composable_lora!
+                "No module named 'composable_lora'! Please reinstall composable_lora and restart the WebUI.")
         composable_lora_function_handler.on_enable()
         composable_lora.reset_step_counters()
 
@@ -81,6 +94,9 @@ class ComposableLoraScript(scripts.Script):
         composable_lora.reset_counters()
 
     def postprocess(self, p, processed, *args):
+        if not hasattr(composable_lora, "should_reload"):
+            raise ModuleNotFoundError( #NOTICE: You Must Restart the WebUI after Install composable_lora!
+                "No module named 'composable_lora'! Please reinstall composable_lora and restart the WebUI.")
         composable_lora_function_handler.on_disable()
         if composable_lora.enabled:
             if composable_lora.opt_plot_lora_weight:
