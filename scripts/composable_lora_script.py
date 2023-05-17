@@ -43,7 +43,8 @@ def check_install_state():
             "module 'composable_lora' not found! Please reinstall composable_lora and restart the WebUI.")
 
 script_callbacks.on_script_unloaded(unload)
-script_callbacks.on_before_reload(check_install_state)
+if hasattr(script_callbacks, "on_before_reload"):
+    script_callbacks.on_before_reload(check_install_state)
 script_callbacks.on_before_ui(check_install_state)
 
 class ComposableLoraScript(scripts.Script):

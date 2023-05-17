@@ -221,34 +221,65 @@ def plot_lora():
             drawing_data[i].extend([0.0]*(max_size - datalist_len))
     return plot_helper.plot_lora_weight(drawing_data, drawing_lora_names)
 
-def clear_cache_lora(compvis_module):
+def lora_backup_weights(self: Union[torch.nn.Conv2d, torch.nn.Linear, torch.nn.MultiheadAttention]):
+    lora_layer_name = getattr(self, 'lora_layer_name', None)
+    if lora_layer_name is None:
+        return
+    import lora
+
+    weights_backup = getattr(self, "composable_lora_weights_backup", None)
+    if weights_backup is None:
+        if isinstance(self, torch.nn.MultiheadAttention):
+            weights_backup = (self.in_proj_weight.to(devices.cpu, copy=True), self.out_proj.weight.to(devices.cpu, copy=True))
+        else:
+            weights_backup = self.weight.to(devices.cpu, copy=True)
+
+        self.composable_lora_weights_backup = weights_backup
+        self.lora_weights_backup = weights_backup
+
+def clear_cache_lora(compvis_module : Union[torch.nn.Conv2d, torch.nn.Linear, torch.nn.MultiheadAttention], force_clear : bool):
     lora_layer_name = getattr(compvis_module, 'lora_layer_name', 'unknown layer')
     if lora_layer_name in cache_layer_list:
         return
     cache_layer_list.append(lora_layer_name)
     lyco_weights_backup = getattr(compvis_module, "lyco_weights_backup", None)
     lora_weights_backup = getattr(compvis_module, "lora_weights_backup", None)
-    if enabled:
-        if lyco_weights_backup is not None:
+    composable_lora_weights_backup = getattr(compvis_module, "composable_lora_weights_backup", None)
+    if enabled or force_clear:
+        if composable_lora_weights_backup is not None:
             if isinstance(compvis_module, torch.nn.MultiheadAttention):
-                compvis_module.in_proj_weight.copy_(lyco_weights_backup[0])
-                compvis_module.out_proj.weight.copy_(lyco_weights_backup[1])
-                lora_weights_backup = (
-                    lyco_weights_backup[0].to(devices.cpu, copy=True), 
-                    lyco_weights_backup[1].to(devices.cpu, copy=True)
-                )
+                compvis_module.in_proj_weight.copy_(composable_lora_weights_backup[0])
+                compvis_module.out_proj.weight.copy_(composable_lora_weights_backup[1])
             else:
-                compvis_module.weight.copy_(lyco_weights_backup)
-                lora_weights_backup = lyco_weights_backup.to(devices.cpu, copy=True)
-            setattr(compvis_module, "lora_weights_backup", lora_weights_backup)
-        elif lora_weights_backup is not None:
+                compvis_module.weight.copy_(composable_lora_weights_backup)
+        else:
+            if lyco_weights_backup is not None:
+                if isinstance(compvis_module, torch.nn.MultiheadAttention):
+                    compvis_module.in_proj_weight.copy_(lyco_weights_backup[0])
+                    compvis_module.out_proj.weight.copy_(lyco_weights_backup[1])
+                    lora_weights_backup = (
+                        lyco_weights_backup[0].to(devices.cpu, copy=True), 
+                        lyco_weights_backup[1].to(devices.cpu, copy=True)
+                    )
+                else:
+                    compvis_module.weight.copy_(lyco_weights_backup)
+                    lora_weights_backup = lyco_weights_backup.to(devices.cpu, copy=True)
+                setattr(compvis_module, "lora_weights_backup", lora_weights_backup)
+            elif lora_weights_backup is not None:
+                if isinstance(compvis_module, torch.nn.MultiheadAttention):
+                    compvis_module.in_proj_weight.copy_(lora_weights_backup[0])
+                    compvis_module.out_proj.weight.copy_(lora_weights_backup[1])
+                else:
+                    compvis_module.weight.copy_(lora_weights_backup)
+            setattr(compvis_module, "lora_current_names", ())
+            setattr(compvis_module, "lyco_current_names", ())
+    else:
+        if (composable_lora_weights_backup is not None) and composable_lycoris.has_webui_lycoris:
             if isinstance(compvis_module, torch.nn.MultiheadAttention):
-                compvis_module.in_proj_weight.copy_(lora_weights_backup[0])
-                compvis_module.out_proj.weight.copy_(lora_weights_backup[1])
+                compvis_module.in_proj_weight.copy_(composable_lora_weights_backup[0])
+                compvis_module.out_proj.weight.copy_(composable_lora_weights_backup[1])
             else:
-                compvis_module.weight.copy_(lora_weights_backup)
-        setattr(compvis_module, "lora_current_names", ())
-        setattr(compvis_module, "lyco_current_names", ())  
+                compvis_module.weight.copy_(composable_lora_weights_backup)
 
 def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, alpha, res, num_loras, num_prompts):
     global text_model_encoder_counter
@@ -392,7 +423,21 @@ def apply_composable_lora(lora_layer_name, m_lora, module, m_type: str, patch, a
     return res
 
 def lora_Linear_forward(self, input):
-    clear_cache_lora(self)
+    if composable_lycoris.has_webui_lycoris:
+        lora_backup_weights(self)
+        if not enabled:
+            import lycoris
+            import lora
+            lyco_count = len(lycoris.loaded_lycos)
+            old_lyco_count = getattr(self, "old_lyco_count", 0)
+            if old_lyco_count > 0 and lyco_count <= 0:
+                clear_cache_lora(self, True)
+            self.old_lyco_count = lyco_count
+            torch.nn.Linear_forward_before_lyco = lora.lora_Linear_forward
+            #if lyco_count <= 0:
+            #    return lora.lora_Linear_forward(self, input)
+            return lycoris.lyco_Linear_forward(self, input)
+    clear_cache_lora(self, False)
     if (not self.weight.is_cuda) and input.is_cuda: #if variables not on the same device (between cpu and gpu)
         self_weight_cuda = self.weight.to(device=devices.device) #pass to GPU
         to_del = self.weight
@@ -407,7 +452,21 @@ def lora_Linear_forward(self, input):
     return res
 
 def lora_Conv2d_forward(self, input):
-    clear_cache_lora(self)
+    if composable_lycoris.has_webui_lycoris:
+        lora_backup_weights(self)
+        if not enabled:
+            import lycoris
+            import lora
+            lyco_count = len(lycoris.loaded_lycos)
+            old_lyco_count = getattr(self, "old_lyco_count", 0)
+            if old_lyco_count > 0 and lyco_count <= 0:
+                clear_cache_lora(self, True)
+            self.old_lyco_count = lyco_count
+            torch.nn.Conv2d_forward_before_lyco = lora.lora_Conv2d_forward
+            #if lyco_count <= 0:
+            #    return lora.lora_Conv2d_forward(self, input)
+            return lycoris.lyco_Conv2d_forward(self, input)
+    clear_cache_lora(self, False)
     if (not self.weight.is_cuda) and input.is_cuda:
         self_weight_cuda = self.weight.to(device=devices.device)
         to_del = self.weight
@@ -422,7 +481,21 @@ def lora_Conv2d_forward(self, input):
     return res
 
 def lora_MultiheadAttention_forward(self, input):
-    clear_cache_lora(self)
+    if composable_lycoris.has_webui_lycoris:
+        lora_backup_weights(self)
+        if not enabled:
+            import lycoris
+            import lora
+            lyco_count = len(lycoris.loaded_lycos)
+            old_lyco_count = getattr(self, "old_lyco_count", 0)
+            if old_lyco_count > 0 and lyco_count <= 0:
+                clear_cache_lora(self, True)
+            self.old_lyco_count = lyco_count
+            torch.nn.MultiheadAttention_forward_before_lyco = lora.lora_MultiheadAttention_forward
+            #if lyco_count <= 0:
+            #    return lora.lora_MultiheadAttention_forward(self, input)
+            return lycoris.lyco_MultiheadAttention_forward(self, input)
+    clear_cache_lora(self, False)
     if (not self.weight.is_cuda) and input.is_cuda:
         self_weight_cuda = self.weight.to(device=devices.device)
         to_del = self.weight
