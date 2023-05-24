@@ -150,8 +150,9 @@ def add_step_counters():
     should_print = True
     step_counter += 1
 
-    if step_counter > num_steps:
-        step_counter = 0
+    if step_counter == num_steps + 1:
+        if not opt_hires_step_as_global:
+            step_counter = 0
     else:
         if opt_plot_lora_weight:
             log_lora()
@@ -523,6 +524,7 @@ opt_uc_text_model_encoder = False
 opt_uc_diffusion_model = False
 opt_plot_lora_weight = False
 opt_single_no_uc = False
+opt_hires_step_as_global = False
 verbose = True
 
 sd_processing = None
@@ -536,11 +538,14 @@ first_log_drawing : bool = False
 is_single_block : bool = False
 num_batches: int = 0
 num_steps: int = 20
+num_hires_steps: int = 20
 prompt_loras: List[Dict[str, float]] = []
 text_model_encoder_counter: int = -1
 diffusion_model_counter: int = 0
 step_counter: int = 0
 cache_layer_list : List[str] = []
+
+
 
 should_print : bool = True
 prompt_blocks: List[str] = []

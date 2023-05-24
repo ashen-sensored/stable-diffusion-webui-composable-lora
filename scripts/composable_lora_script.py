@@ -65,19 +65,27 @@ class ComposableLoraScript(scripts.Script):
                 opt_uc_diffusion_model = gr.Checkbox(value=False, label="Use Lora in uc diffusion model")
                 opt_plot_lora_weight = gr.Checkbox(value=False, label="Plot the LoRA weight in all steps")
                 opt_single_no_uc = gr.Checkbox(value=False, label="Don't use LoRA in uc if there're no subprompts")
+                opt_hires_step_as_global = gr.Checkbox(value=False, label="Treat hires step as global step")
 
-        return [enabled, opt_composable_with_step, opt_uc_text_model_encoder, opt_uc_diffusion_model, opt_plot_lora_weight, opt_single_no_uc]
+        return [enabled, opt_composable_with_step, opt_uc_text_model_encoder, opt_uc_diffusion_model, opt_plot_lora_weight, opt_single_no_uc, opt_hires_step_as_global]
 
-    def process(self, p: StableDiffusionProcessing, enabled: bool, opt_composable_with_step: bool, opt_uc_text_model_encoder: bool, opt_uc_diffusion_model: bool, opt_plot_lora_weight: bool, opt_single_no_uc: bool):
+    def process(self, p: StableDiffusionProcessing, enabled: bool, opt_composable_with_step: bool, opt_uc_text_model_encoder: bool, opt_uc_diffusion_model: bool, opt_plot_lora_weight: bool, opt_single_no_uc: bool, opt_hires_step_as_global: bool):
         composable_lora.enabled = enabled
         composable_lora.opt_uc_text_model_encoder = opt_uc_text_model_encoder
         composable_lora.opt_uc_diffusion_model = opt_uc_diffusion_model
         composable_lora.opt_composable_with_step = opt_composable_with_step
         composable_lora.opt_plot_lora_weight = opt_plot_lora_weight
         composable_lora.opt_single_no_uc = opt_single_no_uc
+        composable_lora.opt_hires_step_as_global = opt_hires_step_as_global
 
         composable_lora.num_batches = p.batch_size
-        composable_lora.num_steps = p.steps
+        if opt_hires_step_as_global:
+            composable_lora.num_steps = p.steps + p.hr_second_pass_steps
+        else:
+            composable_lora.num_steps = p.steps
+
+        composable_lora.num_hires_steps = p.hr_second_pass_steps
+
 
         if not hasattr(composable_lora, "should_reload"):
             raise ModuleNotFoundError( #NOTICE: You Must Restart the WebUI after Install composable_lora!
