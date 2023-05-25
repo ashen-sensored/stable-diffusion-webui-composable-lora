@@ -274,10 +274,12 @@ def parse_step_rendering_syntax(prompt: str):
     return lora_controllers
 
 def check_lora_weight(controllers : List[LoRA_Controller_Base], test_lora : str, step : int, all_step : int, custom_scope):
-    result_weight = 0.0
+    if len(controllers) == 0:
+        return 0.0
+    result_weight = -float('inf')
     for controller in controllers:
-        calc_weight = controller.test(test_lora, step, all_step, custom_scope)
-        if calc_weight > result_weight:
+        if test_lora == controller.name:
+            calc_weight = controller.test(test_lora, step, all_step, custom_scope)
             result_weight = calc_weight
     return result_weight
 
